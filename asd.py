@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import requests as req
 import json
 import sys
+import re
 
 OUT_DIR = "/home/ricky/dta_out"
 
@@ -157,7 +158,8 @@ def download_playlist(track_name: str, links: list[str]):
         if DEBUG:
             print(f"downloading {track_name}")
 
-        path = f"{OUT_DIR}/{track_name}.mp4"
+        safe_track_name = re.sub(r"[\\/]", "-", track_name)
+        path = f"{OUT_DIR}/{safe_track_name}.mp4"
 
         with open(path, "wb") as f:
             for index, link in enumerate(links):
