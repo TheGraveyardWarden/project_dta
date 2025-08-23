@@ -5,6 +5,8 @@ import requests as req
 import json
 import sys
 
+OUT_DIR = "/home/ricky/dta_out"
+
 CLIENT_ID = "QH0sodO4QzbRjYm1f4FpCtEJvOB3PbaU"
 
 DEBUG = True
@@ -150,8 +152,33 @@ def parse_playlist(playlist_url: str):
         print(e)
         sys.exit(-1)
 
+def download_playlist(track_name: str, links: list[str]):
+    try:
+        if DEBUG:
+            print(f"downloading {track_name}")
+
+        path = f"{OUT_DIR}/{track_name}.mp4"
+
+        with open(path, "wb") as f:
+            for index, link in enumerate(links):
+                res = req.get(link, headers=HEADERS)
+                for chunk in res.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+        if DEBUG:
+            print(f"[+] {track_name} saved to {path}")
+
+    except Exception as e:
+        if DEBUG:
+            print(f"[!] failed to download {track_name}")
+
+        print(e)
+        sys.exit(-1)
+
+
 tracks = get_user_tracks("drewthearchitect", 20000)
 
-pl_url = get_track_playlist_url(tracks[0]["permalink_url"])
-links = parse_playlist(pl_url)
-
+for track in tracks:
+    pl_url = get_track_playlist_url(track["permalink_url"])
+    links = parse_playlist(pl_url)
+    download_playlist(track["title"], links)
