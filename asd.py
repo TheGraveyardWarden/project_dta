@@ -120,7 +120,28 @@ def parse_playlist(playlist_url: str):
         if DEBUG:
             print("[!] parsing playlist")
 
+        links = []
 
+        res = req.get(playlist_url, headers=HEADERS)
+        text = res.text
+
+        i = text.find("https")
+        while i > 0:
+            end = text[i:].find("\n")
+
+            link = text[i:i+end]
+            if link[-1] == "\"":
+                link = link[:-1]
+
+            links.append(link)
+
+            text = text[i+5:]
+            i = text.find("https")
+
+        if DEBUG:
+            print("[+] successfully parsed playlist")
+
+        return links
 
     except Exception as e:
         if DEBUG:
@@ -131,4 +152,6 @@ def parse_playlist(playlist_url: str):
 
 tracks = get_user_tracks("drewthearchitect", 20000)
 
-get_track_playlist_url(tracks[0]["permalink_url"])
+pl_url = get_track_playlist_url(tracks[0]["permalink_url"])
+links = parse_playlist(pl_url)
+
