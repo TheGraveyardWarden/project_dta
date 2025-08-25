@@ -1,0 +1,7 @@
+TODO:
+  cli + argv for scripts
+  utils to handle dirs creation
+  cleanup files on error in downloading
+  multi threading
+  abstract backend
+  skip track if its already downloaded
