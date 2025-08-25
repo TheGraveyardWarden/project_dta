@@ -11,8 +11,16 @@ OUT_DIR = "/home/ricky/dta_out"
 
 DEBUG = True
 
-track = SCTrack.from_url("https://soundcloud.com/drewthearchitect/sofarnogood")
-track.download(OUT_DIR)
+import time
+
+track = SCTrack.from_url("https://soundcloud.com/drewthearchitect/anothertear")
+start = time.perf_counter()
+handle = track.download_parallel(OUT_DIR, 10, 10)
+handle.join_all()
+end = time.perf_counter()
+elapsed = end - start
+
+print(elapsed)
 
 import sys
 sys.exit(0)
