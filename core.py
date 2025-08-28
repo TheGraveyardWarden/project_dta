@@ -8,6 +8,7 @@ import threading
 import math
 from dataclasses import dataclass
 import io
+from pydub import AudioSegment
 
 CLIENT_ID = "QH0sodO4QzbRjYm1f4FpCtEJvOB3PbaU"
 DEFAULT_MAX_WORKERS = 4
@@ -138,14 +139,20 @@ class DLHandle:
     def __init__(self, workers: list[Worker], track):
         self.workers = workers
         self.track = track
+        self.buffer = io.BytesIO()
 
     def join_all(self):
         for worker in self.workers:
             worker.join()
 
-        with open(self.track.path, "wb") as f:
-            for worker in self.workers:
-                f.write(memoryview(worker.buffer.getbuffer()))
+        #with open(self.track.path, "wb") as f:
+        #    for worker in self.workers:
+        #        f.write(memoryview(worker.buffer.getbuffer()))
+
+        self.buffer = io.BytesIO(b"".join(w.buffer.getvalue() for w in self.workers))
+
+        audio = AudioSegment.from_file(self.buffer, format="mp4")
+        audio.export(self.track.path, format="mp3")
 
         print(f"[+] saved {self.track.title} in {self.track.path}")
 
@@ -181,7 +188,7 @@ class SCTrack:
 
     def prepare_trackname(self, o_dir: str) -> str:
         safe_track_name = re.sub(r"[\\/]", "-", self.title)
-        return f"{o_dir}/{safe_track_name}.mp4"
+        return f"{o_dir}/{safe_track_name}.mp3"
 
     def download(self, o_dir: str):
         try:
