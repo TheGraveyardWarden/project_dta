@@ -145,14 +145,14 @@ class DLHandle:
         for worker in self.workers:
             worker.join()
 
-        #with open(self.track.path, "wb") as f:
+        #with open(self.track.path+".mp4", "wb") as f:
         #    for worker in self.workers:
         #        f.write(memoryview(worker.buffer.getbuffer()))
 
         self.buffer = io.BytesIO(b"".join(w.buffer.getvalue() for w in self.workers))
 
-        audio = AudioSegment.from_file(self.buffer, format="mp4")
-        audio.export(self.track.path, format="mp3")
+        audio = AudioSegment.from_file(self.buffer, format="mp4", read_ahead_limit=1*1024*1024)
+        audio.export(self.track.path+".mp3", format="mp3")
 
         print(f"[+] saved {self.track.title} in {self.track.path}")
 
@@ -188,7 +188,7 @@ class SCTrack:
 
     def prepare_trackname(self, o_dir: str) -> str:
         safe_track_name = re.sub(r"[\\/]", "-", self.title)
-        return f"{o_dir}/{safe_track_name}.mp3"
+        return f"{o_dir}/{safe_track_name}"
 
     def download(self, o_dir: str):
         try:
@@ -196,7 +196,7 @@ class SCTrack:
 
             debug(f"downloading {self.title}")
 
-            self.path = self.prepare_trackname(o_dir)
+            self.path = self.prepare_trackname(o_dir) + ".mp4"
 
             with open(self.path, "wb") as f:
                 for index, link in enumerate(self.playlist.links):
