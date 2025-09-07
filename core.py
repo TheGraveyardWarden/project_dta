@@ -98,19 +98,24 @@ class SCPlaylist:
             sys.exit(-1)
 
 @dataclass
-class WorkerData:
+class DLWorkerData:
     idx: int
     part_per_worker: int
     leftovers: int
     is_last: bool
 
-class Worker(threading.Thread):
-    def __init__(self, data: WorkerData, track):
+class DLWorker(threading.Thread):
+    def __init__(self, data: DLWorkerData, track, verbose=False):
         super().__init__(daemon=True)
         self.data = data
         self.track = track
         self.stop_ev = threading.Event()
         self.buffer = io.BytesIO()
+        self.verbose = verbose
+
+    def log(self, x: str):
+        if self.verbose:
+            print(x)
 
     def stop(self):
         self.stop_ev.set()
@@ -126,17 +131,17 @@ class Worker(threading.Thread):
             if self.stop_ev.is_set():
                 return
 
-            debug(f"[!] thread: {self.data.idx}\tattempting to download part {i}")
+            self.log(f"[!] thread: {self.data.idx}\tattempting to download part {i}")
 
             res = local_req.session.get(self.track.playlist.links[i])
             self.buffer.write(res.content)
-            debug(f"[!] thread: {self.data.idx}\tread {len(res.content)} bytes from part {i}")
+            self.log(f"[!] thread: {self.data.idx}\tread {len(res.content)} bytes from part {i}")
 
-        debug(f"[!] thread: {self.data.idx}\tread total {self.buffer.tell()} bytes")
+        self.log(f"[!] thread: {self.data.idx}\tread total {self.buffer.tell()} bytes")
         return
 
 class DLHandle:
-    def __init__(self, workers: list[Worker], track):
+    def __init__(self, workers: list[DLWorker], track):
         self.workers = workers
         self.track = track
         self.buffer = io.BytesIO()
@@ -239,15 +244,14 @@ class SCTrack:
             print("part_per_worker: ", part_per_worker)
 
             for worker_id in range(n_workers):
-                data = WorkerData(worker_id, part_per_worker, leftovers, worker_id == n_workers-1)
-                worker = Worker(data, self)
+                verbose = False
+                data = DLWorkerData(worker_id, part_per_worker, leftovers, worker_id == n_workers-1)
+                worker = DLWorker(data, self, verbose)
                 worker.start()
                 workers.append(worker)
 
             return DLHandle(workers, self)
 
-            # join downloaded data
-            # write to file
             # additionally make a way for dumping downloaded data once a while so ram doesnt explode
 
         except Exception as e:
