@@ -159,7 +159,7 @@ class DLHandle:
         audio = AudioSegment.from_file(self.buffer, format="mp4", read_ahead_limit=1*1024*1024)
         audio.export(self.track.path+".mp3", format="mp3")
 
-        print(f"[+] saved {self.track.title} in {self.track.path}")
+        print(f"[+] saved {self.track.title} in {self.track.path+'.mp3'}")
 
 class SCTrack:
     def __init__(self, _id: int, url: str, title: str, duration: int, transcoding_url: str, auth: str):
